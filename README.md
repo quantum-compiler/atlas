@@ -1,1 +1,1 @@
-##Torque: High-performance GPU-based Quantum Circuit Simulator
+# Torque: High-performance GPU-based Quantum Circuit Simulator
