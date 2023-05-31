@@ -1,0 +1,6 @@
+[submodule "deps/quartz"]
+	path = deps/quartz
+	url = https://github.com/quantum-compiler/quartz.git
+[submodule "deps/legion"]
+	path = deps/legion
+	url = https://gitlab.com/StanfordLegion/legion.git
