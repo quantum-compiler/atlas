@@ -1,0 +1,10 @@
+mpirun -np 1 ~/qs/quartz/build/simulate --import-circuit qft --n 34 --local 28 --device 4 --use-ilp > ~/qs/result-compiletime/quartz/qft_34.log
+mpirun -np 1 ~/qs/quartz/build/simulate --import-circuit qftentangled --n 34 --local 28 --device 4 --use-ilp > ~/qs/result-compiletime/quartz/qftentangled_34.log
+mpirun -np 1 ~/qs/quartz/build/simulate --import-circuit ghz --n 34 --local 28 --device 4 --use-ilp > ~/qs/result-compiletime/quartz/ghz_34.log
+mpirun -np 1 ~/qs/quartz/build/simulate --import-circuit graphstate --n 34 --local 28 --device 4 --use-ilp > ~/qs/result-compiletime/quartz/graphstate_34.log
+mpirun -np 1 ~/qs/quartz/build/simulate --import-circuit twolocalrandom --n 34 --local 28 --device 4 --use-ilp > ~/qs/result-compiletime/quartz/twolocalrandom_34.log
+mpirun -np 1 ~/qs/quartz/build/simulate --import-circuit realamprandom --n 34 --local 28 --device 4 --use-ilp > ~/qs/result-compiletime/quartz/realamprandom_34.log
+mpirun -np 1 ~/qs/quartz/build/simulate --import-circuit su2random --n 34 --local 28 --device 4 --use-ilp > ~/qs/result-compiletime/quartz/su2random_34.log
+mpirun -np 1 ~/qs/quartz/build/simulate --import-circuit ae --n 34 --local 28 --device 4 --use-ilp > ~/qs/result-compiletime/quartz/ae_34.log
+mpirun -np 1 ~/qs/quartz/build/simulate --import-circuit qpeexactm --n 34 --local 28 --device 4 --use-ilp > ~/qs/result-compiletime/quartz/qpeexact_34.log
+mpirun -np 1 ~/qs/quartz/build/simulate --import-circuit qpeinexact --n 34 --local 28 --device 4 --use-ilp > ~/qs/result-compiletime/quartz/qpeinexact_34.log
