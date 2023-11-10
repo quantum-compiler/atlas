@@ -13,9 +13,6 @@ CUDA_DIR=/opt/nvidia/hpc_sdk/Linux_x86_64/22.7/cuda/11.7
 NCCL_DIR=/global/common/software/nersc/pm-2022q4/sw/nccl-2.15.5-ofi-r4
 # NCCL_DIR=~/nccl/build
 
-# using simulator
-QUARTZ_USE_SIMULATOR=OFF
-
 # backend
 USE_LEGION=OFF
 
