@@ -27,7 +27,7 @@ make
 cd $TORQUE_HOME
 mkdir build
 cd build
-config/config.linux
+../config/config.linux
 make -j 12
 ```
 
