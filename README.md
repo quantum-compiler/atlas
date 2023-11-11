@@ -4,7 +4,7 @@
 
 ### Prerequisites
 * cuQuantum (requires compute capability 7.0+)
-* OpenMPI
+* OpenMPI/MPICH
 * cmake >= 3.18
 * NCCL
 * CUDA
@@ -48,19 +48,20 @@ salloc --nodes 2 -q regular --time 00:20:00 --constraint gpu --gpus-per-node 4 -
 * Load modules
 
 ```
-module use /global/common/software/m3169/perlmutter/modulefiles
-module unload cray-mpich cray-libsci
-module load openmpi
 module load nccl
-module load python
+module load cudatoolkit
 conda activate qs
 export PATH=$PATH:$HiGHS_HOME/build/bin
+export MPICH_GPU_SUPPORT_ENABLED=1
 ```
 
-* Distributed GPU-based simulation launched with `mpirun`, for example:
+* Distributed GPU-based simulation launched with `srun`, for example:
 
 ```
-mpirun -np 2 -H $hosts $TORQUE_HOME/build/examples/mpi-based/simulate --import-circuit qft --n 31 --local 28 --device 4 --use-ilp
+srun -u \
+     --ntasks="$(( SLURM_JOB_NUM_NODES ))" \
+     --ntasks-per-node=1\ 
+     $TORQUE_HOME/build/examples/mpi-based/simulate --import-circuit qft --n 31 --local 28 --device 4 --use-ilp
 ```
 
 ### AWS
