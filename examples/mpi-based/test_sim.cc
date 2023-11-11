@@ -48,9 +48,9 @@ int main(int argc, char *argv[]) {
                        GateType::u3, GateType::cx, GateType::cz, GateType::cp,
                        GateType::p, GateType::z, GateType::swap});
   auto seq = quartz::CircuitSeq::from_qasm_file(
-      &ctx, std::string("/global/homes/z/zjia/qs/torque/circuit/MQTBench_") +
+      &ctx, std::string("/pscratch/sd/z/zjia/qs/torque/circuit/MQTBench_") +
                 std::to_string(nqubits) + "q/" + circuit_file +
-                "_indep_qiskit_" + std::to_string(nqubits) + ".qasm");
+                "_indep_qiskit_" + std::to_string(nqubits) + "_no_swap.qasm");
   sim::qcircuit::Circuit<double> circuit(nqubits, nlocal, ndevice, myRank, nRanks);
   circuit.compile(seq.get(), &ctx, &interpreter, use_ilp);
   circuit.simulate(true);

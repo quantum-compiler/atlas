@@ -17,14 +17,6 @@ if [ -n "$NCCL_DIR" ]; then
   SET_NCCL="-DNCCL_ROOT=${NCCL_DIR}"
 fi
 
-if [ "$QUARTZ_USE_SIMULATOR" = "ON" ]; then
-  SET_SIM="-DQUARTZ_USE_SIMULATOR=ON"
-elif [ "$QUARTZ_USE_SIMULATOR" = "OFF" ]; then
-  SET_SIM="-DQUARTZ_USE_SIMULATOR=OFF"
-else
-  SET_SIM="-DQUARTZ_USE_SIMULATOR=ON"
-fi
-
 if [ "$USE_LEGION" = "ON" ]; then
   SET_LEGION="-DUSE_LEGION=ON"
 elif [ "$USE_LEGION" = "OFF" ]; then

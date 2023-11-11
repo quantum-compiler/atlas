@@ -3,23 +3,18 @@
 #SBATCH -C gpu
 #SBATCH -q regular
 #SBATCH -t 01:00:00
-#SBATCH -N 16
+#SBATCH -N 2
 #SBATCH --gpus-per-node=4
 
-cd ~/qs/nccl-tests
-rm -rf ~/qs/nccl-tests/nodefile-nccl
-nodelist=$(scontrol show hostname $SLURM_NODELIST)
-hosts=""
-for HOST in $nodelist; do
-    echo $HOST
-    hosts="$hosts,$HOST"
-done
-echo $hosts
-module use /global/common/software/m3169/perlmutter/modulefiles
-module unload cray-mpich cray-libsci
-module load openmpi
+cd /pscratch/sd/z/zjia//nccl-tests
 module load nccl
-module load python
+module load cudatoolkit
 conda activate qs
 
-mpirun -x LD_LIBRARY_PATH=LD_LIBRARY_PATH:/global/common/software/nersc/pm-2022q4/sw/nccl-2.15.5-ofi-r4/lib:/opt/nvidia/hpc_sdk/Linux_x86_64/22.7/cuda/11.7/lib64:/global/common/software/m3169/perlmutter/openmpi/5.0.0rc10-ofi-cuda-22.5_11.7/gnu/lib:/opt/cray/libfabric/1.15.2.0/lib64 -np 16 -H $hosts ./build/alltoall_perf -b 4G -e 4G -f 2 -d double -g 4 -w 0 -n 1
+export MPICH_GPU_SUPPORT_ENABLED=1
+# make MPI=1 MPI_HOME=$CRAY_MPICH_DIR CUDA_HOME=/opt/nvidia/hpc_sdk/Linux_x86_64/22.7/cuda/11.7 NCCL_HOME=/global/common/software/nersc/pm-2022q4/sw/nccl-2.15.5-ofi-r4
+GPUSPERNODE=4
+srun -u \
+     --ntasks="$(( SLURM_JOB_NUM_NODES ))" \
+     --ntasks-per-node=1\
+     ./build/alltoall_perf -b 4G -e 4G -f 2 -d double -g ${GPUSPERNODE} -w 0 -n 10 > nccl-2nodes.log
