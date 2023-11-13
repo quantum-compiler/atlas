@@ -6,35 +6,63 @@
 #SBATCH -N 8
 #SBATCH --gpus-per-node=4
 
-rm -rf ~/qs/HyQuas/build/nodefile8
-# rm -rf ~/qs/result-srun/hyquas/*_33.log
-nodelist=$(scontrol show hostname $SLURM_NODELIST)
-hosts=""
-for HOST in $nodelist; do
-    echo $HOST
-    hosts="$hosts,$HOST"
-done
-echo $hosts
-module use /global/common/software/m3169/perlmutter/modulefiles
-module unload cray-mpich cray-libsci
-module load openmpi
+rm -rf /pscratch/sd/z/zjia/qs/result-srun/hyquas/*_33.log
 module load nccl
-module load python
+module load cudatoolkit
 conda activate qs
-export PATH=$PATH:/global/homes/z/zjia/qs/quartz/external/HiGHS/build/bin
-export HYQUAS_ROOT=~/qs/HyQuas
+export HYQUAS_ROOT=/pscratch/sd/z/zjia/qs/HyQuas
+export MPICH_GPU_SUPPORT_ENABLED=1
+cd /pscratch/sd/z/zjia/qs/HyQuas/build
+strings=("ae" "dj" "ghz" "graphstate" "ising" "qft" "qpeexact" "qsvm" "su2random" "vqc" "wstate" "bv")
 
-cd ~/qs/HyQuas/build
-`which mpirun` -np 8 -H $hosts ./main ../../quartz/circuit/MQTBench_33q/qft_indep_qiskit_33.qasm
-# `which mpirun` -np 8 -H $hosts ./main ../../quartz/circuit/MQTBench_33q/qft_indep_qiskit_33.qasm > ~/qs/result-srun/hyquas/on_qft_33.log
-# `which mpirun` -np 8 -H $hosts ./main ../../quartz/circuit/MQTBench_33q/qftentangled_indep_qiskit_33.qasm > ~/qs/result-srun/hyquas/on_qftentangled_33.log
-# `which mpirun` -np 8 -H $hosts ./main ../../quartz/circuit/MQTBench_33q/ghz_indep_qiskit_33.qasm > ~/qs/result-srun/hyquas/on_ghz_33.log
-# `which mpirun` -np 8 -H $hosts ./main ../../quartz/circuit/MQTBench_33q/graphstate_indep_qiskit_33.qasm > ~/qs/result-srun/hyquas/on_graphstate_33.log
-# `which mpirun` -np 8 -H $hosts ./main ../../quartz/circuit/MQTBench_33q/twolocalrandom_indep_qiskit_33.qasm > ~/qs/result-srun/hyquas/on_twolocalrandom_33.log
-# `which mpirun` -np 8 -H $hosts ./main ../../quartz/circuit/MQTBench_33q/realamprandom_indep_qiskit_33.qasm > ~/qs/result-srun/hyquas/on_realamprandom_33.log
-# `which mpirun` -np 8 -H $hosts ./main ../../quartz/circuit/MQTBench_33q/su2random_indep_qiskit_33.qasm > ~/qs/result-srun/hyquas/on_su2random_33.log
-# `which mpirun` -np 8 -H $hosts ./main ../../quartz/circuit/MQTBench_33q/aem_indep_qiskit_33.qasm > ~/qs/result-srun/hyquas/on_ae_33.log
-# `which mpirun` -np 8 -H $hosts ./main ../../quartz/circuit/MQTBench_33q/qpeexactm_indep_qiskit_33.qasm > ~/qs/result-srun/hyquas/on_qpeexact_33.log
-# `which mpirun` -np 8 -H $hosts ./main ../../quartz/circuit/MQTBench_33q/qpeinexactm_indep_qiskit_33.qasm > ~/qs/result-srun/hyquas/on_qpeinexact_33.log
+for str in "${strings[@]}"; do
+    # Execute the command with the current string
+    srun -u \
+     --ntasks="$(( SLURM_JOB_NUM_NODES ))" \
+     --ntasks-per-node=1\
+    ./main /pscratch/sd/z/zjia/qs/torque/circuit/MQTBench_33q/${str}_indep_qiskit_33_no_swap.qasm > /pscratch/sd/z/zjia/qs/result-srun/hyquas-new/on_${str}_33.log
+done
 
-# mpirun -np 8 -H $hosts ~/qs/quartz/build/simulate --import-circuit twolocalrandom --n 33 --local 28 --device 4 --use-ilp > ~/qs/result-srun/quartz/twolocalrandom_33.log
+# cd /pscratch/sd/z/zjia/qs/HyQuas/build
+# srun -u \
+#      --ntasks="$(( SLURM_JOB_NUM_NODES ))" \
+#      --ntasks-per-node=1\
+#      ./main /pscratch/sd/z/zjia/qs/torque/circuit/MQTBench_33q/qft_indep_qiskit_33_no_swap.qasm > /pscratch/sd/z/zjia/qs/result-srun/hyquas/on_qft_33.log
+# srun -u \
+#      --ntasks="$(( SLURM_JOB_NUM_NODES ))" \
+#      --ntasks-per-node=1\
+#      ./main /pscratch/sd/z/zjia/qs/torque/circuit/MQTBench_33q/qftentangled_indep_qiskit_33_no_swap.qasm > /pscratch/sd/z/zjia/qs/result-srun/hyquas/on_qftentangled_33.log
+# srun -u \
+#      --ntasks="$(( SLURM_JOB_NUM_NODES ))" \
+#      --ntasks-per-node=1\
+#      ./main /pscratch/sd/z/zjia/qs/torque/circuit/MQTBench_33q/ghz_indep_qiskit_33_no_swap.qasm > /pscratch/sd/z/zjia/qs/result-srun/hyquas/on_ghz_33.log
+# srun -u \
+#      --ntasks="$(( SLURM_JOB_NUM_NODES ))" \
+#      --ntasks-per-node=1\
+#      ./main /pscratch/sd/z/zjia/qs/torque/circuit/MQTBench_33q/graphstate_indep_qiskit_33_no_swap.qasm > /pscratch/sd/z/zjia/qs/result-srun/hyquas/on_graphstate_33.log
+# srun -u \
+#      --ntasks="$(( SLURM_JOB_NUM_NODES ))" \
+#      --ntasks-per-node=1\
+#      ./main /pscratch/sd/z/zjia/qs/torque/circuit/MQTBench_33q/twolocalrandom_indep_qiskit_33_no_swap.qasm > /pscratch/sd/z/zjia/qs/result-srun/hyquas/on_twolocalrandom_33.log
+# srun -u \
+#      --ntasks="$(( SLURM_JOB_NUM_NODES ))" \
+#      --ntasks-per-node=1\
+#      ./main /pscratch/sd/z/zjia/qs/torque/circuit/MQTBench_33q/realamprandom_indep_qiskit_33_no_swap.qasm > /pscratch/sd/z/zjia/qs/result-srun/hyquas/on_realamprandom_33.log
+# srun -u \
+#      --ntasks="$(( SLURM_JOB_NUM_NODES ))" \
+#      --ntasks-per-node=1\
+#      ./main /pscratch/sd/z/zjia/qs/torque/circuit/MQTBench_33q/su2random_indep_qiskit_33_no_swap.qasm > /pscratch/sd/z/zjia/qs/result-srun/hyquas/on_su2random_33.log
+# srun -u \
+#      --ntasks="$(( SLURM_JOB_NUM_NODES ))" \
+#      --ntasks-per-node=1\
+#      ./main /pscratch/sd/z/zjia/qs/torque/circuit/MQTBench_33q/ae_indep_qiskit_33_no_swap.qasm > /pscratch/sd/z/zjia/qs/result-srun/hyquas/on_ae_33.log
+# srun -u \
+#      --ntasks="$(( SLURM_JOB_NUM_NODES ))" \
+#      --ntasks-per-node=1\
+#      ./main /pscratch/sd/z/zjia/qs/torque/circuit/MQTBench_33q/qpeexact_indep_qiskit_33_no_swap.qasm > /pscratch/sd/z/zjia/qs/result-srun/hyquas/on_qpeexact_33.log
+# srun -u \
+#      --ntasks="$(( SLURM_JOB_NUM_NODES ))" \
+#      --ntasks-per-node=1\
+#      ./main /pscratch/sd/z/zjia/qs/torque/circuit/MQTBench_33q/qpeinexact_indep_qiskit_33_no_swap.qasm > /pscratch/sd/z/zjia/qs/result-srun/hyquas/on_qpeinexact_33.log
+
+# # mpirun -np 8 -H $hosts /pscratch/sd/z/zjia/qs/quartz/build/simulate --import-circuit twolocalrandom --n 33 --local 28 --device 4 --use-ilp > /pscratch/sd/z/zjia/qs/result-srun/quartz/twolocalrandom_33.log

@@ -201,7 +201,8 @@ template <typename DT>
 bool qcircuit::Circuit<DT>::compile(quartz::CircuitSeq *seq,
                                     quartz::Context *ctx,
                                     quartz::PythonInterpreter *interpreter,                     
-                                    bool use_ilp) {
+                                    bool use_ilp,
+                                    std::string cache_file_name_prefix) {
   // 1. ILP/heuristics
   std::vector<std::vector<int>> local_qubits;
   if (!use_ilp)
@@ -234,7 +235,8 @@ bool qcircuit::Circuit<DT>::compile(quartz::CircuitSeq *seq,
   //     /*shared_memory_init_cost=*/10,
   //     /*shared_memory_gate_cost=*/[](quartz::GateType type) { if (type == quartz::GateType::swap) return 1000.0; else return 0.8; },
   //     /*shared_memory_total_qubits=*/10, /*shared_memory_cacheline_qubits=*/3);
-  auto schedules = get_schedules(*seq, local_qubits, kernel_cost, ctx, /*absorb_single_qubit_gates=*/true);
+  auto schedules = get_schedules(*seq, local_qubits, kernel_cost, ctx, /*absorb_single_qubit_gates=*/true, -1, 
+                                cache_file_name_prefix);
   int idx = 0;
   num_fuse = 0;
   num_shm = 0;

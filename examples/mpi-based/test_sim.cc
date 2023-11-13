@@ -46,13 +46,16 @@ int main(int argc, char *argv[]) {
   quartz::Context ctx({GateType::input_qubit, GateType::input_param,
                        GateType::h, GateType::x, GateType::ry, GateType::u2,
                        GateType::u3, GateType::cx, GateType::cz, GateType::cp,
-                       GateType::p, GateType::z, GateType::swap});
+                       GateType::p, GateType::z, GateType::rz, GateType::swap});
   auto seq = quartz::CircuitSeq::from_qasm_file(
       &ctx, std::string("/pscratch/sd/z/zjia/qs/torque/circuit/MQTBench_") +
                 std::to_string(nqubits) + "q/" + circuit_file +
                 "_indep_qiskit_" + std::to_string(nqubits) + "_no_swap.qasm");
   sim::qcircuit::Circuit<double> circuit(nqubits, nlocal, ndevice, myRank, nRanks);
-  circuit.compile(seq.get(), &ctx, &interpreter, use_ilp);
+  circuit.compile(seq.get(), &ctx, &interpreter, use_ilp, "/pscratch/sd/z/zjia/qs/torque/schedules/" +
+                                      circuit_file +
+                                      std::to_string(nqubits) + "_" +
+                                      std::to_string(nlocal) + "_complicated");
   circuit.simulate(true);
 
   MPICHECK(MPI_Finalize());

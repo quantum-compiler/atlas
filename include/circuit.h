@@ -25,7 +25,7 @@ public:
 
   // APIs for generating circuit from quartz CircuitSeq
   bool compile(quartz::CircuitSeq *seq, quartz::Context *ctx,
-               quartz::PythonInterpreter *interpreter, bool use_ilp);
+               quartz::PythonInterpreter *interpreter, bool use_ilp, std::string cache_file_name_prefix = "");
 
   // APIs for creating gates, currently just read from files
 
