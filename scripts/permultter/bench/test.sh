@@ -1,26 +1,29 @@
 #!/bin/bash
-#SBATCH -A m4138
-#SBATCH -C gpu
-#SBATCH -q regular
-#SBATCH -t 01:00:00
-#SBATCH -N 1
-#SBATCH --gpus-per-node=4
 
-rm -rf ~/qs/torque/build/nodefile2
-nodelist=$(scontrol show hostname $SLURM_NODELIST)
-hosts=""
-for HOST in $nodelist; do
-    echo $HOST
-    hosts="$hosts,$HOST"
-done
-echo $hosts
-module use /global/common/software/m3169/perlmutter/modulefiles
-module unload cray-mpich cray-libsci
-module load openmpi
-module load nccl
-module load python
-conda activate qs
-export PATH=$PATH:/global/homes/z/zjia/qs/torque/deps/quartz/external/HiGHS/build/bin
+CONSTRAINT="gpu"
+NUM_NODES=1
+GPUS_PER_TASK=1
+GPUS_PER_NODE=4
 
+REGISTRY="nvcr.io/nvidia"
+IMAGE_NAME="cuquantum-appliance"
+IMAGE_TAG="23.03"
 
-mpirun -np 1 -H $hosts ~/qs/torque/build/examples/mpi-based/simulate --import-circuit qft --n 30 --local 28 --device 4 --use-ilp > ~/qs/torque/qft_30.log
+NUM_GPUS=$((${GPUS_PER_NODE}*${NUM_NODES}))
+cd /pscratch/sd/z/zjia/qs/torque/scripts/permultter/bench
+srun --account=m4138 \
+     --qos=regular \
+     --constraint=${CONSTRAINT} \
+     --nodes=${NUM_NODES} \
+     --gpus-per-node=${GPUS_PER_NODE} \
+     --gpus-per-task=${GPUS_PER_TASK} \
+     --gpu-bind=none \
+     --ntasks=${NUM_GPUS} \
+     --gpus=${NUM_GPUS} \
+     shifter --image="${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}" \
+     --module=cuda-mpich \
+     python dist_cuquantum.py --nqubits 29
+     
+
+# python -m cuquantum_benchmarks circuit --frontend qiskit --backend cusvaer --benchmark general --name qft --nqubits 31 --ngpus 1 --precision double --cusvaer-global-index-bits 1 --cusvaer-p2p-device-bits 2 --cusvaer-comm-plugin-type mpi_mpich --cusvaer-comm-plugin-soname libmpi.so > /pscratch/sd/z/zjia/qs/result-srun/cusvaer/qft_31.log
+
