@@ -7,7 +7,10 @@
 #SBATCH --gpus-per-node=4
 
 cd /pscratch/sd/z/zjia//nccl-tests
+module load cray-mpich/8.1.25
+# nccl/2.15.5-ofi
 module load nccl
+# cudatoolkit/11.7
 module load cudatoolkit
 conda activate qs
 
