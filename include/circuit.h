@@ -41,6 +41,7 @@ private:
   void MatMul(unsigned mask, unsigned n_fused, M &res_mat, const M &m1);
   void MatShuffle(M &res_mat, unsigned n_qubit, const std::vector<int> &perm);
   void update_layout(std::vector<int> local_qubits);
+  void update_layout_from_schedule(const quartz::Schedule &cur_schedule, const quartz::Schedule &prev_schedule);
   bool getMat_per_device(quartz::Context *ctx, int part_id, quartz::Gate* gate, std::vector<int> qubit_indices, std::vector<ParamType>& params, std::vector<ComplexType> &res, unsigned &mask, std::vector<int>& perm);
   
   KernelGateType toKernel(quartz::GateType type);
