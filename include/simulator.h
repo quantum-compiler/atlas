@@ -73,6 +73,7 @@ public:
   bool ApplyKernelGates(std::vector<KernelGate> &kernelgates,
                         qindex logicQubitset);
   bool ApplyShuffle(Gate<DT> &gate);
+  bool ApplyRecordedShuffle(unsigned global_swap, const std::vector<int2> &local_swap);
   bool Destroy(bool dump_results);
 
 private:

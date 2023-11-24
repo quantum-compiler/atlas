@@ -205,13 +205,13 @@ bool qcircuit::Circuit<DT>::compile(quartz::CircuitSeq *seq,
                                     std::string cache_file_name_prefix) {
   // 1. ILP/heuristics
   std::vector<std::vector<int>> local_qubits;
-  if (!use_ilp)
-    // int result = num_iterations_by_heuristics(seq, n_local, local_qubits);
-    assert(0);
-  else {
-    local_qubits =
-        compute_local_qubits_with_ilp(*seq, n_local, ctx, interpreter);
-  }
+  // if (!use_ilp)
+  //   // int result = num_iterations_by_heuristics(seq, n_local, local_qubits);
+  //   assert(0);
+  // else {
+  //   local_qubits =
+  //       compute_local_qubits_with_ilp(*seq, n_local, ctx, interpreter);
+  // }
   // fprintf(fout, " %d", result);
 
   // 2. DP, fuse gates and add shuffle gates
@@ -235,8 +235,12 @@ bool qcircuit::Circuit<DT>::compile(quartz::CircuitSeq *seq,
   //     /*shared_memory_init_cost=*/10,
   //     /*shared_memory_gate_cost=*/[](quartz::GateType type) { if (type == quartz::GateType::swap) return 1000.0; else return 0.8; },
   //     /*shared_memory_total_qubits=*/10, /*shared_memory_cacheline_qubits=*/3);
-  auto schedules = get_schedules(*seq, local_qubits, kernel_cost, ctx, /*absorb_single_qubit_gates=*/true, -1, 
-                                cache_file_name_prefix);
+  // auto schedules = get_schedules(*seq, local_qubits, kernel_cost, ctx, /*absorb_single_qubit_gates=*/true, -1, 
+  //                               cache_file_name_prefix);
+  auto schedules = get_schedules_with_ilp(*seq, n_local, std::min(2, int(num_qubits - n_local)),
+                                   kernel_cost, ctx, interpreter,
+                                   /*attach_single_qubit_gates=*/true,
+                                   /*max_num_dp_states=*/500, cache_file_name_prefix);
   int idx = 0;
   num_fuse = 0;
   num_shm = 0;
@@ -244,22 +248,17 @@ bool qcircuit::Circuit<DT>::compile(quartz::CircuitSeq *seq,
   for (auto &schedule : schedules) {
     // add shuffle gate
     if (idx == 0) {
-      local_mask.assign(num_qubits, false);
-      //init layout = local_qubits[0]
-      for (int i = 0; i < n_local; i++) {
-        local_mask[local_qubits[idx][i]] = true;
-        permutation[i] = local_qubits[idx][i];
-        pos[local_qubits[idx][i]] = i;
-      }
-      int j = 0;
+      auto qubit_layout = schedule.get_qubit_layout();
+      init_permutation.assign(qubit_layout.begin(), qubit_layout.end());
+      permutation.assign(qubit_layout.begin(), qubit_layout.end());
+      // get pos from layout
       for (int i = 0; i < num_qubits; i++) {
-        if(!local_mask[i]) {
-          permutation[n_local + j] = i;
-          pos[i] = n_local + j;
-          j++;
-        }
+        pos[permutation[i]] = i;
       }
-      init_permutation = permutation;
+      // set the local mask
+      for (int i = 0; i < num_qubits; i++) {
+        local_mask.push_back(pos[i] < n_local);
+      }
 
       printf("Current Layout0: [");
       for (int i = 0; i < permutation.size(); i++) {
@@ -271,21 +270,20 @@ bool qcircuit::Circuit<DT>::compile(quartz::CircuitSeq *seq,
       idx++;
     }
     else {
-      local_mask.assign(num_qubits, false);
-      std::vector<int> target;
-      for (int i = 0; i < n_local; i++) {
-        target.push_back(local_qubits[idx][i]);
-        local_mask[local_qubits[idx][i]] = true;
-      }
-
+      auto qubit_layout = schedule.get_qubit_layout();
+      permutation.assign(qubit_layout.begin(), qubit_layout.end());
+      // get pos from layout
       for (int i = 0; i < num_qubits; i++) {
-        if(!local_mask[i])
-          target.push_back(i);
+        pos[permutation[i]] = i;
       }
-      Gate<DT> gate{SHUFFLE, num_qubits, 0, target, {}, {}, {}};
+      // set the local mask
+      for (int i = 0; i < num_qubits; i++) {
+        local_mask[i] = (pos[i] < n_local);
+      }
+      Gate<DT> gate{SHUFFLE, num_qubits, 0, qubit_layout, {}, {}, {}};
       gates.push_back(gate);
       task_map.push_back(SimGateType::SHUFFLE);
-      update_layout(target);
+      update_layout_from_schedule(schedule, schedules[idx-1]);
       printf("Current Layout0: [");
       for (int i = 0; i < permutation.size(); i++) {
         printf("%d, ", permutation[i]);
@@ -414,10 +412,18 @@ void qcircuit::Circuit<DT>::simulate(bool use_mpi) {
 
   int normal_idx = 0;
   int shm_idx = 0;
+  int shuffle_idx = 0;
   for (auto &task : task_map) {
     if (task == SHUFFLE) {
-      simulator.ApplyShuffle(gates[normal_idx]);
+      // simulator.ApplyShuffle(gates[normal_idx]);
+      auto global_swap = global_swap_record[shuffle_idx];
+      auto local_swap = local_swap_record[shuffle_idx];
+      simulator.ApplyRecordedShuffle(global_swap, local_swap);
+      // update layout & pos
+      simulator.permutation = permutation_record[shuffle_idx+1];
+      simulator.pos = pos_record[shuffle_idx+1];
       normal_idx++;
+      shuffle_idx++;
     }
     else if (task == FUSED) {
       for (int i = 0; i < n_devices; i++){
@@ -715,6 +721,7 @@ bool qcircuit::Circuit<DT>::getMat_per_device(quartz::Context *ctx, int part_id,
   }
   else if (gate->get_num_control_qubits() == 1) {//cz, cp, cx
     int c = qubit_indices[0], t = qubit_indices[1];
+    printf("c,t %d,%d\n",c,t);
     if (local_mask[c] && local_mask[t]) { // CU(c, t)
       auto *m = gate->get_matrix(params);
       res = m->flatten();
@@ -929,6 +936,33 @@ void qcircuit::Circuit<DT>::update_layout(std::vector<int> targets) {
   // for (int i = 0; i < permutation.size(); i++) {
   //   printf("%d, ", permutation[i]);
   // }
+}
+
+template <typename DT>
+void qcircuit::Circuit<DT>::update_layout_from_schedule(const quartz::Schedule &cur_schedule, const quartz::Schedule &prev_schedule) {
+  
+  std::vector<int2> local_swap;
+  unsigned global = 0;
+  auto local_swap_from_schedule = cur_schedule.get_local_swaps_from_previous_stage(prev_schedule);
+  for (int i = 0; i < local_swap_from_schedule.size(); i++) {
+    int2 swap;
+    swap.x = local_swap_from_schedule[i].first;
+    swap.y = local_swap_from_schedule[i].second;
+    local_swap.push_back(swap);
+  }
+  // check for global swap
+  auto prev_pos = pos_record.back();
+  auto prev_permutation = permutation_record.back();
+  for (int i = 0; i < n_global; i++) {
+    if(pos[prev_permutation[i+n_local]] < n_local) {
+      global |= unsigned(1) << i;
+    }
+  }
+
+  permutation_record.push_back(permutation);
+  pos_record.push_back(pos);
+  local_swap_record.push_back(local_swap);
+  global_swap_record.push_back(global);
 }
 
 template <typename DT>

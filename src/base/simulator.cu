@@ -389,6 +389,86 @@ bool SimulatorCuQuantum<DT>::ApplyShuffle(Gate<DT> &gate) {
   return true;
 }
 
+template <typename DT>
+bool SimulatorCuQuantum<DT>::ApplyRecordedShuffle(unsigned global_swap, const std::vector<int2> &local_swap) {
+  cudaDataType_t data_type = cuDT;
+
+  int const maskLen = 0;
+  int maskBitString[] = {};
+  int maskOrdering[] = {};
+
+  printf("Using NCCL for cross-node shuffle\n");
+  
+  // local bit swap
+  int nLocalSwaps = local_swap.size();
+  for (int i = 0; i < n_devices; i++) {
+    if (nLocalSwaps == 0)
+      break;
+    HANDLE_CUDA_ERROR(cudaSetDevice(devices[i]));
+    HANDLE_ERROR(custatevecSwapIndexBits(
+        handle_[i], d_sv[i], data_type, n_local, local_swap.data(),
+        nLocalSwaps, maskBitString, maskOrdering, maskLen));
+  }
+
+  int nGlobalSwaps = 0;
+  for (int i = 0; i < n_global; i++) {
+    if(global_swap >> i & 1) nGlobalSwaps++;
+  }
+
+  int sendsize = subSvSize / (1 << nGlobalSwaps);
+  for (int i = 0; i < n_devices; i++) {
+    HANDLE_CUDA_ERROR(cudaSetDevice(devices[i]));
+    HANDLE_CUDA_ERROR(
+        cudaMalloc(&recv_buf[i], subSvSize * sizeof(cuDoubleComplex)));
+  }
+
+  cudaEvent_t t_start[MAX_DEVICES], t_end[MAX_DEVICES];
+  for (int i = 0; i < n_devices; ++i) {
+    HANDLE_CUDA_ERROR(cudaSetDevice(devices[i]));
+    HANDLE_CUDA_ERROR(cudaStreamSynchronize(s[i]));
+    cudaEventCreate(&t_start[i]);
+    cudaEventCreate(&t_end[i]);
+    cudaEventRecord(t_start[i], s[i]);
+  }
+
+  NCCLCHECK(ncclGroupStart());
+  for (int i = 0; i < n_devices; ++i) {
+    printf("My physical id:%d, %d\n", myRank * n_devices + i, global_swap);
+    unsigned myncclrank = device_phy_to_logical.at(myRank * n_devices + i);
+    all2all(d_sv[i], sendsize, ncclDouble, recv_buf[i], sendsize, ncclDouble,
+            comms[i], s[i], global_swap, myncclrank);
+  }
+  NCCLCHECK(ncclGroupEnd());
+
+  float shuffle_average = 0;
+  for (int i = 0; i < n_devices; i++) {
+    HANDLE_CUDA_ERROR(cudaStreamSynchronize(s[i]));
+    // profiling
+    cudaEventRecord(t_end[i], s[i]);
+    HANDLE_CUDA_ERROR(cudaEventSynchronize(t_end[i]));
+    float elapsed = 0;
+    HANDLE_CUDA_ERROR(cudaEventElapsedTime(&elapsed, t_start[i], t_end[i]));
+    cudaEventDestroy(t_start[i]);
+    cudaEventDestroy(t_end[i]);
+    printf("[NCCL Rank %d] Shuffle Time: %.2fms\n", device_phy_to_logical.at(myRank * n_devices + i),
+            elapsed);
+    shuffle_average += elapsed;
+  }
+  shuffle_time.push_back(shuffle_average/n_devices);
+
+  // swap recv_buf and d_sv
+  for (int i = 0; i < n_devices; ++i) {
+    void* tmp = recv_buf[i];
+    recv_buf[i] = d_sv[i];
+    d_sv[i] = tmp;
+  }
+
+  for (int i = 0; i < n_devices; i++) {
+    HANDLE_CUDA_ERROR(cudaFree(recv_buf[i]));
+  }
+  
+  return true;
+}
 // create sv handles and statevectors for each device on single node
 template <typename DT>
 bool SimulatorCuQuantum<DT>::InitStateSingle(
