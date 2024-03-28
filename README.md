@@ -14,20 +14,23 @@
 #### 1. Set related environment variables in `config/config.linux`
 We support two modes for simulation in Torque. First one is distributed GPU-based simulation (`USE_LEGION=OFF`). The other one is CPU-offload enabled simulation (`USE_LEGION=ON`), which support simulating more qubits on a single machine. Note that the second mode hasn't been tested for multi-node execution.
 
+In addition, please also replace all hard-coded paths (starting with `/global/homes/m/mingkuan`) with your home directory.
+
 #### 2. Install the HiGHS solver in Quartz
 ```shell
 cd deps/quartz/external/HiGHS
 mkdir build
 cd build
 cmake ..
-make
+make -j 12
 ```
-#### 2. Build and Install
+#### 3. Build and Install
 ```shell
-cd $TORQUE_HOME
+cd ../../../../..  # cd $TORQUE_HOME
 mkdir build
 cd build
-../config/config.linux
+# module load nccl  # You may need this on Perlmutter
+bash ../config/config.linux
 make -j 12
 ```
 
@@ -64,10 +67,30 @@ srun -u \
      $TORQUE_HOME/build/examples/mpi-based/simulate --import-circuit qft --n 31 --local 28 --device 4 --use-ilp
 ```
 
+### For CPU-offload simulation:
+
+1. Create a Python 3.8 environment with PuLP:
+```shell
+conda create --name pulp python=3.8
+conda activate pulp
+pip install pulp
+```
+
+2. Make sure the `setenv("PYTHONPATH", ...)` in `examples/legion-based/test_sim_legion.cc` is pointing to the correct location.
+
+3. Build and run in interactive mode:
+```shell
+cd build
+make -j 12
+cd ../scripts/perlmutter/bench
+salloc --nodes 1 -q regular --time 00:30:00 --constraint gpu --gpus-per-node 4 --account=YOUR_ACCOUNT
+bash offload.sh  # takes around 25 minutes
+```
+
 ### AWS
 
 #### For CPU-offload simulation:
-The scalability test is running on AWS p3.8xlarge instance.
+To run the scalability test on an AWS p3.8xlarge instance:
 ```
 cd $TORQUE_HOME/build/examples/legion-based/`
 

@@ -3,14 +3,14 @@
 CONSTRAINT="gpu"
 NUM_NODES=1
 GPUS_PER_TASK=1
-GPUS_PER_NODE=4
+GPUS_PER_NODE=1
 
 REGISTRY="nvcr.io/nvidia"
 IMAGE_NAME="cuquantum-appliance"
 IMAGE_TAG="23.03"
 
 NUM_GPUS=$((${GPUS_PER_NODE}*${NUM_NODES}))
-cd /pscratch/sd/z/zjia/qs/torque/scripts/permultter/bench
+cd /global/homes/m/mingkuan/torque/scripts/permultter/bench
 srun --account=m4138 \
      --qos=regular \
      --constraint=${CONSTRAINT} \
@@ -22,8 +22,9 @@ srun --account=m4138 \
      --gpus=${NUM_GPUS} \
      shifter --image="${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}" \
      --module=cuda-mpich \
-     python dist_cuquantum.py --nqubits 29
-     
+     python dist_cuquantum.py --nqubits 28
 
-# python -m cuquantum_benchmarks circuit --frontend qiskit --backend cusvaer --benchmark general --name qft --nqubits 31 --ngpus 1 --precision double --cusvaer-global-index-bits 1 --cusvaer-p2p-device-bits 2 --cusvaer-comm-plugin-type mpi_mpich --cusvaer-comm-plugin-soname libmpi.so > /pscratch/sd/z/zjia/qs/result-srun/cusvaer/qft_31.log
+
+
+# python -m cuquantum_benchmarks circuit --frontend qiskit --backend cusvaer --benchmark general --name qft --nqubits 31 --ngpus 1 --precision double --cusvaer-global-index-bits 1 --cusvaer-p2p-device-bits 2 --cusvaer-comm-plugin-type mpi_mpich --cusvaer-comm-plugin-soname libmpi.so > /global/homes/m/mingkuan/result-srun/cusvaer/qft_31.log
 

@@ -1,8 +1,8 @@
 # find custatevec in CUSTATEVEC_ROOT
 find_library(CUSTATEVEC_LIBRARY
   NAMES libcustatevec${LIBEXT}
-  PATHS ${CUSTATEVEC_ROOT}
-  PATH_SUFFIXES lib lib64
+  PATHS ${CUSTATEVEC_ROOT}/lib
+  PATH_SUFFIXES 12
   DOC "CUSTATEVEC library." )
 
 find_path(CUSTATEVEC_INCLUDE_DIR

@@ -3,7 +3,7 @@
 #SBATCH -C gpu
 #SBATCH -q regular
 #SBATCH -t 01:00:00
-#SBATCH -N 8
+#SBATCH -N 4
 #SBATCH --gpus-per-node=4
 
 module load cray-mpich/8.1.25
@@ -20,5 +20,5 @@ for str in "${strings[@]}"; do
     srun -u \
      --ntasks="$(( SLURM_JOB_NUM_NODES ))" \
      --ntasks-per-node=1\
-    ./main /pscratch/sd/z/zjia/qs/torque/circuit/MQTBench_33q/${str}_indep_qiskit_33_no_swap.qasm > /pscratch/sd/z/zjia/qs/result-srun/hyquas-new/on_${str}_33.log
+    ./main /global/homes/m/mingkuan/torque/circuit/MQTBench_32q/${str}_indep_qiskit_32_no_swap.qasm > /global/homes/m/mingkuan/result-srun/hyquas/on_${str}_32.log
 done

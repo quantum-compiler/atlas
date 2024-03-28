@@ -38,10 +38,10 @@ void sim::top_level_task(
   //               "_indep_qiskit_" + std::to_string(config.num_all_qubits) +
   //               ".qasm");
   auto seq = quartz::CircuitSeq::from_qasm_file(
-      &qtz, std::string("/home/ubuntu/quartz/circuit/MQTBench_") + std::to_string(config.num_all_qubits) +
+      &qtz, std::string("/global/homes/m/mingkuan/torque/circuit/MQTBench_") + std::to_string(config.num_all_qubits) +
                 "q/" + config.circuit +
-                "_indep_qiskit_" + std::to_string(config.num_all_qubits) + 
-                ".qasm");
+                "_indep_qiskit_" + std::to_string(config.num_all_qubits) +
+                "_no_swap.qasm");
   sim::qcircuit::Circuit<double> circuit(config.num_all_qubits,
                                          config.num_local_qubits, (unsigned(1) << (config.num_all_qubits - config.num_local_qubits)), 0, 1);
   circuit.compile(seq.get(), &qtz, &interpreter, use_ilp);
@@ -102,7 +102,7 @@ int main(int argc, char **argv) {
   // This needs to be set, otherwise NCCL will try to use group kernel launches,
   // which are not compatible with the Realm CUDA hijack.
   setenv("NCCL_LAUNCH_MODE", "PARALLEL", true);
-  setenv("PYTHONPATH", "/home/ubuntu/.local/lib/python3.8/site-packages", true /*overwrite*/);
+  setenv("PYTHONPATH", "/global/homes/m/mingkuan/.conda/envs/pulp/lib/python3.8/site-packages/", true /*overwrite*/);
   quartz::init_python_interpreter();
 
   char *python_path = getenv("PYTHONPATH");
