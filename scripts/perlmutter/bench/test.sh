@@ -10,7 +10,7 @@ IMAGE_NAME="cuquantum-appliance"
 IMAGE_TAG="23.03"
 
 NUM_GPUS=$((${GPUS_PER_NODE}*${NUM_NODES}))
-cd /global/homes/m/mingkuan/torque/scripts/permultter/bench
+cd /global/homes/m/mingkuan/torque/scripts/perlmutter/bench
 srun --account=m4138 \
      --qos=regular \
      --constraint=${CONSTRAINT} \
