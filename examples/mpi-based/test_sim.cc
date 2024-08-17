@@ -55,7 +55,7 @@ int main(int argc, char *argv[]) {
   circuit.compile(seq.get(), &ctx, &interpreter, use_ilp, "/global/homes/m/mingkuan/torque/schedules/" +
                                       circuit_file +
                                       std::to_string(nqubits) + "_" +
-                                      std::to_string(nlocal) + "_complicated");
+                                      std::to_string(nlocal));
   circuit.simulate(true);
 
   MPICHECK(MPI_Finalize());

@@ -1,4 +1,4 @@
-# Torque: High-performance GPU-based Quantum Circuit Simulator
+# Atlas: High-performance GPU-based Quantum Circuit Simulator
 
 ## Installation
 
@@ -9,10 +9,10 @@
 * NCCL
 * CUDA
 
-### Build Torque
+### Build Atlas
 
 #### 1. Set related environment variables in `config/config.linux`
-We support two modes for simulation in Torque. First one is distributed GPU-based simulation (`USE_LEGION=OFF`). The other one is CPU-offload enabled simulation (`USE_LEGION=ON`), which support simulating more qubits on a single machine. Note that the second mode hasn't been tested for multi-node execution.
+We support two modes for simulation in Atlas. First one is distributed GPU-based simulation (`USE_LEGION=OFF`). The other one is CPU-offload enabled simulation (`USE_LEGION=ON`), which support simulating more qubits on a single machine. Note that the second mode hasn't been tested for multi-node execution.
 
 In addition, please also replace all hard-coded paths (starting with `/global/homes/m/mingkuan`) with your home directory.
 
@@ -38,7 +38,7 @@ make -j 12
 ### Perlmutter
 
 #### Sbatch
-There are some `sbatch` scripts for running simulation using Torque in `scripts/perlmutter/bench`. Run them with:
+There are some `sbatch` scripts for running simulation using Atlas in `scripts/perlmutter/bench`. Run them with:
 ```
 sbatch xxx.sh
 ```
